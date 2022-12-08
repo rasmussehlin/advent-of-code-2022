@@ -1,4 +1,4 @@
-def trans(v):
+def translate(v):
     if ord(v) < 97:
         return 27 + ord(v) - 65
     else:
@@ -10,7 +10,7 @@ def findSame(group):
             if r1 == r2:
                 for r3 in group[2]:
                     if r1 == r3:
-                        return trans(r1)
+                        return translate(r1)
 
 
 with open('input.txt') as f:

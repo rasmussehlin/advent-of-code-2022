@@ -1,4 +1,4 @@
-def vinnare(a, b):
+def winner(a, b):
     if a == 'A' and b == 'Y' or a == 'B' and b == 'Z' or a == 'C' and b == 'X':
         return 6
     elif a == 'A' and b == 'X' or a == 'B' and b == 'Y' or a == 'C' and b == 'Z':
@@ -12,14 +12,14 @@ with open('input.txt') as f:
     summ = 0
     for line in l:
         v = line.split()
-        jag = v[1]
-        if jag == 'X':
+        me = v[1]
+        if me == 'X':
             summ += 1
-        elif jag == 'Y':
+        elif me == 'Y':
             summ += 2
         else:
             summ += 3
         
-        summ += vinnare(v[0], v[1])
+        summ += winner(v[0], v[1])
 
     print(summ)
