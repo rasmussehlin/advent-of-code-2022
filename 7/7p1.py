@@ -1,14 +1,28 @@
 from collections import deque
 import math
 
+class Folder:
+    children = []
+    totalSize = 0
+    def __init__(self, name, parent) -> None:
+        self.name = name
+        self.parent = parent
+        self.children = []
+        self.totalSize = 0
+    def getParentString(self) -> str:
+        if self.parent != None:
+            return self.parent.getParentString() + '/' +  self.name
+        else:
+            return '$ '
+        
+
 with open('input.txt') as f:
     l = f.read()
     # Stack od current pos. in dir-tree
     dirStack = deque()
-    # Store folder names and their size (excluding subdirectories) : {<folder>: <folders[]>}
-    folderSizes = dict()
-    # Folders containing folders : {<folder>: <folders[]>}
-    folders = dict()
+    dirStack.append('/')
+
+    rootFolder = Folder('/', None)
 
     # Create input array
     l = l.strip().split('\n')
@@ -18,8 +32,10 @@ with open('input.txt') as f:
     ls = False
     # Size sum curr. folder
     folderSize = 0
-    
-    dirStack.append('/')
+
+    currentFolderObject = rootFolder
+
+    totalSize = 0
 
     for line in l:
         line = line.split(' ')
@@ -41,26 +57,55 @@ with open('input.txt') as f:
         # Perform state action
         if cd:
             if third == '/':
-                dirStack.clear()
-                dirStack.append('/')
+                currentFolderObject = rootFolder
             elif third == '..':
-                dirStack.pop()
+                currentFolderObject = currentFolderObject.parent
             else:
-                dirStack.append(third)
+                # Store dir structure
+                newFolder = Folder(third, parent=currentFolderObject)
+                currentFolderObject.children.append(newFolder)
+                currentFolderObject = newFolder
         elif ls == False:
             # Counting folders and filesizes
-            print('Dirstack: ', dirStack)
-            currentFolder = dirStack[-1]
             if first == 'dir':
-                print('Folders: ', folders.get(currentFolder, 'INGA VÄRDEN'))
-                if folders.get(currentFolder, '---') == '---':
-                    folders[currentFolder] = []
-                
-                folders[currentFolder].append(second)
+                pass
             elif first.isnumeric():
-                folderSizes[currentFolder] = int(first)
-    print('Folders: ', folders)
+                currentFolderObject.totalSize += int(first)
+                totalSize += int(first)
 
+    # Count sizes
+    currentFolderObject = rootFolder
+    dirStack.clear()
+    dirStack.append((currentFolderObject, 0))
+    treeHasBeenTraversed = False
+    totalSizeOfDirectories = 0
 
+    while treeHasBeenTraversed == False:
+        currentFolderObject = dirStack[-1][0]
+        currentChildIndex = dirStack[-1][1]
 
-    
+        # All children traversed?
+        hasZeroChildren = len(currentFolderObject.children) == 0
+        allChildrenTraversed = len(currentFolderObject.children) == currentChildIndex
+
+        if hasZeroChildren or allChildrenTraversed:
+            if currentFolderObject.parent != None:
+                currentFolderObject.parent.totalSize += currentFolderObject.totalSize
+            else:
+                # We're at the root
+                treeHasBeenTraversed = True
+
+            if currentFolderObject.totalSize <= 100000:
+                totalSizeOfDirectories += currentFolderObject.totalSize
+            
+            # Remove this folderObject
+            dirStack.pop()
+
+            continue
+
+        # Traversing children
+        dirStack[-1] = (dirStack[-1][0], dirStack[-1][1] + 1) # Increase child index
+        # Add child to stack
+        dirStack.append((currentFolderObject.children[currentChildIndex], 0))
+
+    print(totalSizeOfDirectories)
