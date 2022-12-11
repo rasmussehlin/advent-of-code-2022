@@ -35,7 +35,7 @@ def chineeseRemainderTheorem(item, divisors):
         base = int(N / divisors[i])
         base = base % divisors[i]
         exponent = phi(divisors[i]) - 1
-        solutions.append(getRestFromPower(base, exponent, divisor[i]))
+        solutions.append(getRestFromPower(base, exponent, divisors[i]))
     
     # Calculating the smallest number for given rests
     x = 0
@@ -152,7 +152,7 @@ with open('input.txt') as f:
     
     # Throw stuff!
     for i in range(NR_OF_ROUNDS):
-        if NR_OF_ROUNDS % 500 == 0:
+        if i % 1000 == 0:
             print('Currently on round', i)
             printAllMonkeys(monkeys)
             print()
