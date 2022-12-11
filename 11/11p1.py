@@ -1,5 +1,6 @@
 from collections import deque
 
+# The blueprint for a monkey
 class Monkey:
     items = deque()
     operationFunc = ''
@@ -17,10 +18,10 @@ class Monkey:
         self.falseThrowTo = ifFalse
         self.nrOfInspections = 0
 
-    def operation(self, old) -> int:
+    def calculateNewWorryLevel(self, old) -> int:
         return eval('old' + self.operationFunc)
 
-    def getReceivingMonkey(self, worryLevel) -> bool:
+    def getReceivingMonkeyIndex(self, worryLevel) -> bool:
         if worryLevel % self.dividingFactor == 0:
             return self.trueThrowTo
         else:
@@ -29,12 +30,13 @@ class Monkey:
     def throwAllItems(self, otherMonkeys):
         for i in range(len(self.items)):
             item = self.items.popleft()
-            item = self.operation(item)
+            item = self.calculateNewWorryLevel(item)
             item = int(item / 3)
-            receivingMonkey = self.getReceivingMonkey(item)
+            receivingMonkey = self.getReceivingMonkeyIndex(item)
             otherMonkeys[receivingMonkey].items.append(item)
             self.nrOfInspections += 1
 
+# Create monkey object from text input
 def parseNewMonkey(monkeyText):
     rows = monkeyText.strip().split('\n')
     # items
@@ -57,6 +59,7 @@ def parseNewMonkey(monkeyText):
 
     return Monkey(items, operation, dividingFactor, ifTrue, ifFalse)
 
+# Helper function to print all monkeys and their items
 def printAllMonkeys(monkeys):
     for i in range(len(monkeys)):
         print(str(i) + ':', monkeys[i].items)
@@ -78,11 +81,12 @@ with open('input.txt') as f:
             monkeys[j].indexForPrinting = j # For printing results, aestethics
             monkeys[j].throwAllItems(monkeys)
     
+    # Print result
     print('== Final item distribution ==')
     printAllMonkeys(monkeys)
     print()
-
     
+    # Sort monkeys by nr of inspections
     monkeys.sort(key=lambda monkey: monkey.nrOfInspections, reverse=True)
     print('== Monkeys sorted by number of inspections ==')
     for i in range(len(monkeys)):
