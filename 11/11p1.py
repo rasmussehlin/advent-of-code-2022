@@ -4,16 +4,16 @@ from collections import deque
 class Monkey:
     items = deque()
     operationFunc = ''
-    dividingFactor = 0
+    divisor = 0
     trueThrowTo = -1
     falseThrowTo = -1
     nrOfInspections = 0
     indexForPrinting = -1
 
-    def __init__(self, items, operationFunc, dividingFactor, ifTrue, ifFalse) -> None:
+    def __init__(self, items, operationFunc, divisor, ifTrue, ifFalse) -> None:
         self.items = items
         self.operationFunc = operationFunc
-        self.dividingFactor = dividingFactor
+        self.divisor = divisor
         self.trueThrowTo = ifTrue
         self.falseThrowTo = ifFalse
         self.nrOfInspections = 0
@@ -22,7 +22,7 @@ class Monkey:
         return eval('old' + self.operationFunc)
 
     def getReceivingMonkeyIndex(self, worryLevel) -> bool:
-        if worryLevel % self.dividingFactor == 0:
+        if worryLevel % self.divisor == 0:
             return self.trueThrowTo
         else:
             return self.falseThrowTo
@@ -51,13 +51,13 @@ def parseNewMonkey(monkeyText):
 
     # test
     test = rows[3].strip().split(' ')
-    dividingFactor = int(test[3])
+    divisor = int(test[3])
 
     # throws
     ifTrue = int(rows[4].strip().split(' ')[5])
     ifFalse = int(rows[5].strip().split(' ')[5])
 
-    return Monkey(items, operation, dividingFactor, ifTrue, ifFalse)
+    return Monkey(items, operation, divisor, ifTrue, ifFalse)
 
 # Helper function to print all monkeys and their items
 def printAllMonkeys(monkeys):
