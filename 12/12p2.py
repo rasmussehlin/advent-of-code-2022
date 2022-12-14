@@ -112,7 +112,7 @@ def updateHeightMapWithTrail(heightMap, pathFinderClimbing, pathFinderDescending
     heightMap[climbingY][climbingX] = ord(STOMPED_GROUND_CHARACTER)
     heightMap[descendingY][descendingX] = ord(STOMPED_GROUND_CHARACTER)
 
-def getShortestPath(climber, descender, intersectionPoint):
+def getShortestPath(descender):
     path = []
 
     def addToPath(self, positionObject):
@@ -125,17 +125,17 @@ def getShortestPath(climber, descender, intersectionPoint):
                 hasParent = False
 
     # From climber
-    positionObject = next((pos for pos in climber.visitedPositions if pos[0] == intersectionPoint[0] and pos[1] == intersectionPoint[1]))
-    addToPath(path, positionObject)
-    path.reverse() # Climbers positions gets added backwards
+    # positionObject = next((pos for pos in climber.visitedPositions if pos[0] == intersectionPoint[0] and pos[1] == intersectionPoint[1]))
+    # addToPath(path, positionObject)
+    # path.reverse() # Climbers positions gets added backwards
 
     # From descender
-    positionObject = next((pos for pos in descender.visitedPositions if pos[0] == intersectionPoint[0] and pos[1] == intersectionPoint[1]))
+    positionObject = next((pos for pos in descender.visitedPositions if pos[0] == descender.currentPosition[0] and pos[1] == descender.currentPosition[1]))
     addToPath(path, positionObject)
 
     return path
 
-with open('example.txt') as f:
+with open('input.txt') as f:
     # Format input
     l = f.read()
     lines = l.strip().split('\n')
@@ -155,10 +155,10 @@ with open('example.txt') as f:
     # Path finding loop
     intersectionPoint = None
     while True:
-        fromStart.findPossibleSteps()
+        # fromStart.findPossibleSteps()
         fromEnd.findPossibleSteps()
 
-        fromStart.takeNextStep()
+        # fromStart.takeNextStep()
         fromEnd.takeNextStep()
 
         updateHeightMapWithTrail(heightMap, fromStart, fromEnd)
@@ -168,32 +168,36 @@ with open('example.txt') as f:
             printHeightMap(heightMap)
             # input()
 
-        intersectionPoint = fromStart.intersectsWith(fromEnd)
-        if intersectionPoint != None:
+        # intersectionPoint = fromStart.intersectsWith(fromEnd)
+        # if intersectionPoint != None:
+            # break
+        x = fromEnd.currentPosition[0]
+        y = fromEnd.currentPosition[1]
+        if fromEnd.heightMap[y][x] == ord('a'):
             break
 
         rounds += 1
     
     # Get result and print it
-    shortestPath = getShortestPath(fromStart, fromEnd, intersectionPoint)
+    shortestPath = getShortestPath(fromEnd)
 
     # Create Path Map with heights
     pathMap = [[ord(' ')]*len(lines[0]) for i in range(len(lines))]
     count = 0
     for coordinate in shortestPath:
-        pathMap[coordinate[1]][coordinate[0]] = fromStart.heightMap[coordinate[1]][coordinate[0]]
+        pathMap[coordinate[1]][coordinate[0]] = fromEnd.heightMap[coordinate[1]][coordinate[0]]
         count += 1
-        print(count)
-        printHeightMap(pathMap)
-        input()
+        # print(count)
+        # printHeightMap(pathMap)
+        # input()
     
     # Create Path Map with upperCase
     upperCasePathMap = [[ord(' ')]*len(lines[0]) for i in range(len(lines))]
     for y in range(len(heightMap)):
         for x in range(len(heightMap[0])):
-            upperCasePathMap[y][x] = fromStart.heightMap[y][x]
+            upperCasePathMap[y][x] = fromEnd.heightMap[y][x]
     for coordinate in shortestPath:
-        upperCasePathMap[coordinate[1]][coordinate[0]] = ord(chr(fromStart.heightMap[coordinate[1]][coordinate[0]]).upper())
+        upperCasePathMap[coordinate[1]][coordinate[0]] = ord(chr(fromEnd.heightMap[coordinate[1]][coordinate[0]]).upper())
 
     # Create Path Map with arrows
     arrowMap = [[ord(' ')]*len(lines[0]) for i in range(len(lines))]
@@ -222,10 +226,7 @@ with open('example.txt') as f:
     printHeightMap(upperCasePathMap)
     printHeightMap(arrowMap)
 
-    # I really disagree with it being "- 2". The question is "how many steps"
-    # it takes, but the answer is how many tiles you step on between S and E.
-    # From the last tile to E should also count as a step I think.. well well.
-    print('The shortest path was', len(shortestPath) - 2, 'steps long.')
+    print('The shortest path was', len(shortestPath) - 1, 'steps long.')
         
 
 
