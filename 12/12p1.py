@@ -3,6 +3,7 @@ from collections import deque
 PATH_CHARACTER = '+'
 STOMPED_GROUND_CHARACTER = '.'
 
+# Prints the map to stdout
 def printHeightMap(heightMap):
     for y in range(len(heightMap)):
         for x in range(len(heightMap[0])):
@@ -10,9 +11,10 @@ def printHeightMap(heightMap):
         print()
     print()
 
-# A class that performs a bread first search
+# A class that performs a breadth first search
 class PathFinder:
     def __init__(self, heightMap, startPosition, endPosition, climbing) -> None:
+        # Create a deep copy of heightMap
         self.heightMap = [[ord('?')]*len(lines[0]) for i in range(len(lines))]
         for y in range(len(heightMap)):
             for x in range(len(heightMap[0])):
@@ -31,41 +33,35 @@ class PathFinder:
     
     def checkAndAddStep(self, x, y):
         if x < 0:
-            # print('Coordinate out of bounds.')
             return
         if y < 0:
-            # print('Coordinate out of bounds.')
             return
         if x >= len(self.heightMap[0]):
-            # print('Coordinate out of bounds.')
             return
         if y >= len(self.heightMap):
-            # print('Coordinate out of bounds.')
             return
         # Thanks https://stackoverflow.com/questions/9542738/python-find-in-list
-        # print(next((pos for pos in self.visitedPositions if pos[0] == x and pos[1] == y), False))
         alreadyVisited = next((pos for pos in self.visitedPositions if pos[0] == x and pos[1] == y), False)
         if alreadyVisited:
-            # print('Already visited!!')
             return
         
-        currentHeight = self.heightMap[self.currentPosition[1]][self.currentPosition[0]]
+        # Get current height
+        currentY = self.currentPosition[1]
+        currentX = self.currentPosition[0]
+        currentHeight = self.heightMap[currentY][currentX]
         if chr(currentHeight) == 'S':
             currentHeight = ord('a')
         if chr(currentHeight) == 'E':
             currentHeight = ord('z')
         proposedPositionHeight = self.heightMap[y][x]
 
-        # print('CurrentPos:\t', self.currentPosition)
-        # print('Climbing:\t',self.climbing)
-        # print('Comparison:\t', proposedPositionHeight, chr(proposedPositionHeight), '==', currentHeight, chr(currentHeight))
-        climbingCheck = self.climbing and (proposedPositionHeight == currentHeight + 1 or proposedPositionHeight <= currentHeight)
-        descendingCheck = not self.climbing and (proposedPositionHeight == currentHeight - 1 or proposedPositionHeight >= currentHeight)
+        # Compare heights
+        canClimb = self.climbing and (proposedPositionHeight == currentHeight + 1 or proposedPositionHeight <= currentHeight)
+        canDescend = not self.climbing and (proposedPositionHeight == currentHeight - 1 or proposedPositionHeight >= currentHeight)
 
-        if climbingCheck or descendingCheck:
-            # print('Added step(', x, ',', y, ')')
-            alreadyAdded = next((pos for pos in self.stepsQue if pos[0] == x and pos[1] == y), False)
-            if not alreadyAdded:
+        if canClimb or canDescend:
+            alreadyAddedToStepQue = next((pos for pos in self.stepsQue if pos[0] == x and pos[1] == y), False)
+            if not alreadyAddedToStepQue:
                 self.stepsQue.append((x, y, self.currentPosition))
     
     def findPossibleSteps(self):
@@ -73,15 +69,20 @@ class PathFinder:
         y = self.currentPosition[1]
 
         self.checkAndAddStep(x - 1, y) # Left
-        self.checkAndAddStep(x, y + 1) # Up
+        self.checkAndAddStep(x, y + 1) # Down
         self.checkAndAddStep(x + 1, y) # Right
-        self.checkAndAddStep(x, y - 1) # Down
+        self.checkAndAddStep(x, y - 1) # Up
 
     def takeNextStep(self):
         self.currentPosition = self.stepsQue.popleft()
         self.visitedPositions.append(self.currentPosition)
 
     def intersectsWith(self, otherPathFinder):
+        # This can definetely be more efficent.
+        # For example, instead of making one "step" at a time,
+        # we could let fromStart and fromEnd take one "depth step"
+        # at a time. In other words, check all steps for the next
+        # depth. Then we check intersections for only the most recent levels.
         for position in self.visitedPositions:
             visitedByBoth = next((pos for pos in otherPathFinder.visitedPositions if pos[0] == position[0] and pos[1] == position[1]), False)
             if visitedByBoth:
@@ -89,7 +90,7 @@ class PathFinder:
         
         return None
 
-
+# Parse map from input
 def parseHeightMap():
     heightMap = [[0]*len(lines[0]) for i in range(len(lines))]
     startPosition = (0, 0)
@@ -103,6 +104,7 @@ def parseHeightMap():
                 startPosition = (x, y)
     return heightMap, startPosition, endPosition
 
+# For printing beautifully
 def updateHeightMapWithTrail(heightMap, pathFinderClimbing, pathFinderDescending):
     climbingX = pathFinderClimbing.currentPosition[0]
     climbingY = pathFinderClimbing.currentPosition[1]
@@ -115,10 +117,13 @@ def updateHeightMapWithTrail(heightMap, pathFinderClimbing, pathFinderDescending
 def getShortestPath(climber, descender, intersectionPoint):
     path = []
 
-    def addToPath(self, positionObject):
+    def addToPath(positionObject):
         hasParent = True
         while hasParent:
-            path.append((positionObject[0], positionObject[1]))
+            alreadyAdded = next((pos for pos in path if pos[0] == positionObject[0] and pos[1] == positionObject[1]), False)
+            if not alreadyAdded:
+                path.append((positionObject[0], positionObject[1]))
+            
             if positionObject[2] != None:
                 positionObject = positionObject[2]
             else:
@@ -126,16 +131,17 @@ def getShortestPath(climber, descender, intersectionPoint):
 
     # From climber
     positionObject = next((pos for pos in climber.visitedPositions if pos[0] == intersectionPoint[0] and pos[1] == intersectionPoint[1]))
-    addToPath(path, positionObject)
+    addToPath(positionObject)
     path.reverse() # Climbers positions gets added backwards
 
     # From descender
     positionObject = next((pos for pos in descender.visitedPositions if pos[0] == intersectionPoint[0] and pos[1] == intersectionPoint[1]))
-    addToPath(path, positionObject)
+    addToPath(positionObject)
 
     return path
 
-with open('example.txt') as f:
+
+with open('input.txt') as f:
     # Format input
     l = f.read()
     lines = l.strip().split('\n')
@@ -144,9 +150,7 @@ with open('example.txt') as f:
     endPosition = (0, 0)
     rounds = 0
 
-    # printHeightMap(heightMap)
     heightMap, startPosition, endPosition = parseHeightMap()
-    printHeightMap(heightMap)
 
     # Initialize PathFinders
     fromStart = PathFinder(heightMap, startPosition, endPosition, climbing=True)
@@ -163,10 +167,10 @@ with open('example.txt') as f:
 
         updateHeightMapWithTrail(heightMap, fromStart, fromEnd)
 
-        if rounds < 1000 and rounds % 250 == 0 or rounds > 1000 and rounds % 25 == 0:
+        # Print progress
+        if rounds < 1000 and rounds % 250 == 0 or rounds > 850 and rounds % 25 == 0:
             print(rounds)
             printHeightMap(heightMap)
-            # input()
 
         intersectionPoint = fromStart.intersectsWith(fromEnd)
         if intersectionPoint != None:
@@ -179,13 +183,8 @@ with open('example.txt') as f:
 
     # Create Path Map with heights
     pathMap = [[ord(' ')]*len(lines[0]) for i in range(len(lines))]
-    count = 0
     for coordinate in shortestPath:
         pathMap[coordinate[1]][coordinate[0]] = fromStart.heightMap[coordinate[1]][coordinate[0]]
-        count += 1
-        print(count)
-        printHeightMap(pathMap)
-        input()
     
     # Create Path Map with upperCase
     upperCasePathMap = [[ord(' ')]*len(lines[0]) for i in range(len(lines))]
@@ -215,21 +214,14 @@ with open('example.txt') as f:
         prevCoordinate = coordinate
 
     
+    print('== heightMap ==')
     printHeightMap(heightMap)
-    printHeightMap(fromStart.heightMap)
-    printHeightMap(fromEnd.heightMap)
+    print('== pathMap ==')
     printHeightMap(pathMap)
+    print('== upperCasePathMap ==')
     printHeightMap(upperCasePathMap)
+    print('== arrowMap ==')
     printHeightMap(arrowMap)
 
-    # I really disagree with it being "- 2". The question is "how many steps"
-    # it takes, but the answer is how many tiles you step on between S and E.
-    # From the last tile to E should also count as a step I think.. well well.
-    print('The shortest path was', len(shortestPath) - 2, 'steps long.')
-        
-
-
-
-
-
-
+    # -1 because starting tile included in `shortestPath`
+    print('The shortest path was', len(shortestPath) - 1, 'steps long.')

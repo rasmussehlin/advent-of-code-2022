@@ -3,6 +3,7 @@ from collections import deque
 PATH_CHARACTER = '+'
 STOMPED_GROUND_CHARACTER = '.'
 
+# Prints the map to stdout
 def printHeightMap(heightMap):
     for y in range(len(heightMap)):
         for x in range(len(heightMap[0])):
@@ -10,17 +11,15 @@ def printHeightMap(heightMap):
         print()
     print()
 
-# A class that performs a bread first search
+# A class that performs a breadth first search
 class PathFinder:
-    def __init__(self, heightMap, startPosition, endPosition, climbing) -> None:
+    def __init__(self, heightMap, startPosition) -> None:
+        # Create a deep copy of heightMap
         self.heightMap = [[ord('?')]*len(lines[0]) for i in range(len(lines))]
         for y in range(len(heightMap)):
             for x in range(len(heightMap[0])):
                 self.heightMap[y][x] = heightMap[y][x]
-        # self.heightMap = heightMap[:]
         self.startPosition = startPosition
-        self.endPosition = endPosition
-        self.climbing = climbing
         
         # Contains the next step to do
         self.stepsQue = deque()
@@ -31,41 +30,34 @@ class PathFinder:
     
     def checkAndAddStep(self, x, y):
         if x < 0:
-            # print('Coordinate out of bounds.')
             return
         if y < 0:
-            # print('Coordinate out of bounds.')
             return
         if x >= len(self.heightMap[0]):
-            # print('Coordinate out of bounds.')
             return
         if y >= len(self.heightMap):
-            # print('Coordinate out of bounds.')
             return
         # Thanks https://stackoverflow.com/questions/9542738/python-find-in-list
-        # print(next((pos for pos in self.visitedPositions if pos[0] == x and pos[1] == y), False))
         alreadyVisited = next((pos for pos in self.visitedPositions if pos[0] == x and pos[1] == y), False)
         if alreadyVisited:
-            # print('Already visited!!')
             return
         
-        currentHeight = self.heightMap[self.currentPosition[1]][self.currentPosition[0]]
+        # Get current height
+        currentY = self.currentPosition[1]
+        currentX = self.currentPosition[0]
+        currentHeight = self.heightMap[currentY][currentX]
         if chr(currentHeight) == 'S':
             currentHeight = ord('a')
         if chr(currentHeight) == 'E':
             currentHeight = ord('z')
         proposedPositionHeight = self.heightMap[y][x]
 
-        # print('CurrentPos:\t', self.currentPosition)
-        # print('Climbing:\t',self.climbing)
-        # print('Comparison:\t', proposedPositionHeight, chr(proposedPositionHeight), '==', currentHeight, chr(currentHeight))
-        climbingCheck = self.climbing and (proposedPositionHeight == currentHeight + 1 or proposedPositionHeight <= currentHeight)
-        descendingCheck = not self.climbing and (proposedPositionHeight == currentHeight - 1 or proposedPositionHeight >= currentHeight)
+        # Compare heights
+        canDescend = proposedPositionHeight == currentHeight - 1 or proposedPositionHeight >= currentHeight
 
-        if climbingCheck or descendingCheck:
-            # print('Added step(', x, ',', y, ')')
-            alreadyAdded = next((pos for pos in self.stepsQue if pos[0] == x and pos[1] == y), False)
-            if not alreadyAdded:
+        if canDescend:
+            alreadyAddedToStepQue = next((pos for pos in self.stepsQue if pos[0] == x and pos[1] == y), False)
+            if not alreadyAddedToStepQue:
                 self.stepsQue.append((x, y, self.currentPosition))
     
     def findPossibleSteps(self):
@@ -73,22 +65,13 @@ class PathFinder:
         y = self.currentPosition[1]
 
         self.checkAndAddStep(x - 1, y) # Left
-        self.checkAndAddStep(x, y + 1) # Up
+        self.checkAndAddStep(x, y + 1) # Down
         self.checkAndAddStep(x + 1, y) # Right
-        self.checkAndAddStep(x, y - 1) # Down
+        self.checkAndAddStep(x, y - 1) # Up
 
     def takeNextStep(self):
         self.currentPosition = self.stepsQue.popleft()
         self.visitedPositions.append(self.currentPosition)
-
-    def intersectsWith(self, otherPathFinder):
-        for position in self.visitedPositions:
-            visitedByBoth = next((pos for pos in otherPathFinder.visitedPositions if pos[0] == position[0] and pos[1] == position[1]), False)
-            if visitedByBoth:
-                return visitedByBoth
-        
-        return None
-
 
 def parseHeightMap():
     heightMap = [[0]*len(lines[0]) for i in range(len(lines))]
@@ -103,19 +86,16 @@ def parseHeightMap():
                 startPosition = (x, y)
     return heightMap, startPosition, endPosition
 
-def updateHeightMapWithTrail(heightMap, pathFinderClimbing, pathFinderDescending):
-    climbingX = pathFinderClimbing.currentPosition[0]
-    climbingY = pathFinderClimbing.currentPosition[1]
+def updateHeightMapWithTrail(heightMap, pathFinderDescending):
     descendingX = pathFinderDescending.currentPosition[0]
     descendingY = pathFinderDescending.currentPosition[1]
 
-    heightMap[climbingY][climbingX] = ord(STOMPED_GROUND_CHARACTER)
     heightMap[descendingY][descendingX] = ord(STOMPED_GROUND_CHARACTER)
 
 def getShortestPath(descender):
     path = []
 
-    def addToPath(self, positionObject):
+    def addToPath(positionObject):
         hasParent = True
         while hasParent:
             path.append((positionObject[0], positionObject[1]))
@@ -124,16 +104,12 @@ def getShortestPath(descender):
             else:
                 hasParent = False
 
-    # From climber
-    # positionObject = next((pos for pos in climber.visitedPositions if pos[0] == intersectionPoint[0] and pos[1] == intersectionPoint[1]))
-    # addToPath(path, positionObject)
-    # path.reverse() # Climbers positions gets added backwards
-
     # From descender
     positionObject = next((pos for pos in descender.visitedPositions if pos[0] == descender.currentPosition[0] and pos[1] == descender.currentPosition[1]))
-    addToPath(path, positionObject)
+    addToPath(positionObject)
 
     return path
+
 
 with open('input.txt') as f:
     # Format input
@@ -144,33 +120,23 @@ with open('input.txt') as f:
     endPosition = (0, 0)
     rounds = 0
 
-    # printHeightMap(heightMap)
     heightMap, startPosition, endPosition = parseHeightMap()
-    printHeightMap(heightMap)
 
     # Initialize PathFinders
-    fromStart = PathFinder(heightMap, startPosition, endPosition, climbing=True)
-    fromEnd = PathFinder(heightMap, startPosition=endPosition, endPosition=startPosition, climbing=False)
+    fromEnd = PathFinder(heightMap, startPosition=endPosition)
 
     # Path finding loop
     intersectionPoint = None
     while True:
-        # fromStart.findPossibleSteps()
         fromEnd.findPossibleSteps()
-
-        # fromStart.takeNextStep()
         fromEnd.takeNextStep()
+        updateHeightMapWithTrail(heightMap, fromEnd)
 
-        updateHeightMapWithTrail(heightMap, fromStart, fromEnd)
+        # # Print progress
+        # if rounds % 5 == 0:
+        #     print(rounds)
+        #     printHeightMap(heightMap)
 
-        if rounds < 1000 and rounds % 250 == 0 or rounds > 1000 and rounds % 25 == 0:
-            print(rounds)
-            printHeightMap(heightMap)
-            # input()
-
-        # intersectionPoint = fromStart.intersectsWith(fromEnd)
-        # if intersectionPoint != None:
-            # break
         x = fromEnd.currentPosition[0]
         y = fromEnd.currentPosition[1]
         if fromEnd.heightMap[y][x] == ord('a'):
@@ -183,13 +149,8 @@ with open('input.txt') as f:
 
     # Create Path Map with heights
     pathMap = [[ord(' ')]*len(lines[0]) for i in range(len(lines))]
-    count = 0
     for coordinate in shortestPath:
         pathMap[coordinate[1]][coordinate[0]] = fromEnd.heightMap[coordinate[1]][coordinate[0]]
-        count += 1
-        # print(count)
-        # printHeightMap(pathMap)
-        # input()
     
     # Create Path Map with upperCase
     upperCasePathMap = [[ord(' ')]*len(lines[0]) for i in range(len(lines))]
@@ -219,18 +180,14 @@ with open('input.txt') as f:
         prevCoordinate = coordinate
 
     
+    print('== heightMap ==')
     printHeightMap(heightMap)
-    printHeightMap(fromStart.heightMap)
-    printHeightMap(fromEnd.heightMap)
+    print('== pathMap ==')
     printHeightMap(pathMap)
+    print('== upperCasePathMap ==')
     printHeightMap(upperCasePathMap)
+    print('== arrowMap ==')
     printHeightMap(arrowMap)
 
+    # -1 because starting 'a' included in `shortestPath`
     print('The shortest path was', len(shortestPath) - 1, 'steps long.')
-        
-
-
-
-
-
-
