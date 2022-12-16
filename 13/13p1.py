@@ -1,7 +1,7 @@
 from collections import deque
 
-PRINT_VERBOSE = True
-STEP_MANUALLY = True
+PRINT_VERBOSE = False
+STEP_MANUALLY = False
 
 def log(text):
     if (PRINT_VERBOSE):
@@ -83,54 +83,36 @@ def parsePairStringsToListsAndNumbers(pairStrings):
     
     return pairs
 
-# Iterate through lists
-def isListsInCorrectOrder(left, right, level):
-    log(str(' ' * level) + '- Compare ' + str(left) + '===VS===' + str(right))
-    
-    isInOrder = None
-
-    for i in range(min(len(left), len(right))):
-        isInOrder = isInCorrectOrder(left[i], right[i], level + 1)
-
-        if isInOrder != None:
-            return isInOrder
-    
-    if isInOrder == None and len(left) < len(right):
-        log(str(' ' * (level + 1)) + '+++ In order: Left has less items than right.')
-        isInOrder = True
-    
-    return isInOrder
-
-
 # The recursice compare function
 def isInCorrectOrder(left, right, level):
     if type(left) is int and type(right) is int:
-        log(str(' ' * level) + '- Compare ' + str(left) + '===VS===' + str(right))
-        if right < left:
-            log(str(' ' * (level + 1)) + '--- Out of order: right is less than left')
-            return False
-        elif left < right:
-            log(str(' ' * (level + 1)) + '+++ In order: left is less than right')
+        if left < right:
             return True
+        elif left > right:
+            return False
         else:
             return None
     elif type(left) is list and type(right) is list:
-        if len(right) < len(left):
-            log(str(' ' * level) + '- Compare ' + str(left) + '===VS===' + str(right))
-            log(str(' ' * (level + 1)) + '--- Out of order: right has fewer items than left')
-            log(str(' ' * (level + 1)) + str(left) + '\t' + str(len(left)))
-            log(str(' ' * (level + 1)) + str(right) + '\t' + str(len(right)))
-            return False
+        result = None
+        for i in range(min(len(left), len(right))):
+            result = isInCorrectOrder(left[i], right[i], level + 1)
+            if result != None:
+                return result
         
-        return isListsInCorrectOrder(left, right, level)
+        if result == None:    
+            if len(right) < len(left):
+                return False
+            elif len(left) < len(right):
+                return True
+            else:
+                return None
     else:
-        log(str(' ' * level) + '~ Compare ' + str(left) + '===VS===' + str(right))
-        if type(left) is list:
-            log(str(' ' * level) + 'Converting to list...')
-            return isListsInCorrectOrder(left, [right], level)
-        else:
-            log(str(' ' * level) + 'Converting to list...')
-            return isListsInCorrectOrder([left], right, level)
+        if type(left) is int:
+            left = [left]
+        elif type(right) is int:
+            right = [right]
+        
+        return isInCorrectOrder(left, right, level + 1)
 
 with open('input.txt') as f:
     # Format input
@@ -152,11 +134,10 @@ with open('input.txt') as f:
         right = pairs[i][1]
 
         isCorrectOrder = isInCorrectOrder(left, right, 0)
+
         if isCorrectOrder:
             log(indexToPrint)
             correctOrderIndices.append(indexToPrint)
-
-        waitOnStep()
             
     # Print result
     result = 0
