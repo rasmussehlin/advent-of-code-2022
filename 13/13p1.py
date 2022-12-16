@@ -1,3 +1,5 @@
+# Haven't finished any nice output to the terminal.. too tired :)
+
 from collections import deque
 
 PRINT_VERBOSE = False
