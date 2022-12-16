@@ -1,8 +1,9 @@
-# Haven't finished any nice output to the terminal.. too tired :)
-from functools import cmp_to_key
+# Haven't finished any nice output to the terminal.. too tired :) 
+# And the sorting algorithm is waaaaaay basic. :P
+
 from collections import deque
 
-PRINT_VERBOSE = True
+PRINT_VERBOSE = False
 STEP_MANUALLY = False
 
 def log(text):
@@ -81,37 +82,37 @@ def parsePackets(packets):
     return newPackets
 
 # The recursice compare function
-def isInCorrectOrder(left, right):
+def isInCorrectOrder(left, right, level):
     if type(left) is int and type(right) is int:
         if left < right:
-            return -1
+            return True
         elif left > right:
-            return 1
+            return False
         else:
-            return 0
+            return None
     elif type(left) is list and type(right) is list:
-        result = 0
+        result = None
         for i in range(min(len(left), len(right))):
-            result = isInCorrectOrder(left[i], right[i])
+            result = isInCorrectOrder(left[i], right[i], level + 1)
             if result != None:
-                return 1 if result else -1
+                return result
         
         if result == None:    
             if len(right) < len(left):
-                return 1
+                return False
             elif len(left) < len(right):
-                return -1
+                return True
             else:
-                return 0
+                return None
     else:
         if type(left) is int:
             left = [left]
         elif type(right) is int:
             right = [right]
         
-        return isInCorrectOrder(left, right)
+        return isInCorrectOrder(left, right, level + 1)
 
-with open('example.txt') as f:
+with open('input.txt') as f:
     # Format input
     l = f.read()
     pairsText = l.strip().replace('\n\n', '\n').split('\n')
@@ -119,36 +120,27 @@ with open('example.txt') as f:
     pairsText.append('[[6]]')
     
     # Parse input
-    log(pairsText)
     packets = parsePackets(pairsText)
-    log(packets)
 
-    # It was difficult to get a .sort(comparator) function
-    # Where the comparator returns -1, 0, 1. Thanks to https://stackoverflow.com/questions/5213033/sort-a-list-of-lists-with-a-custom-compare-function
-    # for giving the beneath two lines of code:
-    # sorted(packets, key=cmp_to_key(isInCorrectOrder))
-    packets.sort(key=cmp_to_key(isInCorrectOrder))
+    # Main loop (comparison)
+    indexToPrint = None
+    correctOrderIndices = []
+    index = 0
+    while index < len(packets) - 1:
+        # print('index:', '.'*index)
+        first = packets[index]
+        second = packets[index + 1]
+        # input()
 
-    # # Main loop (comparison)
-    # indexToPrint = None
-    # correctOrderIndices = []
-    # index = 0
-    # while index < len(packets) - 1:
-    #     print('index:', '.'*index)
-    #     first = packets[index]
-    #     second = packets[index + 1]
-    #     input()
-
-    #     if isInCorrectOrder(first, second, 0) == False:
-    #         print('Not ordered, changing places and setting index to 0.')
-    #         tempFirst = first
-    #         packets[index] = second
-    #         packets[index + 1] = tempFirst
-    #         index = 0
-    #         continue
+        if isInCorrectOrder(first, second, 0) == False:
+            # print('Not ordered, changing places and setting index to 0.')
+            tempFirst = first
+            packets[index] = second
+            packets[index + 1] = tempFirst
+            index = 0
+            continue
         
-
-    #     index += 1
+        index += 1
     
     # It's in order now! Let's find the divider packets
     firstIndex = -1
@@ -163,4 +155,4 @@ with open('example.txt') as f:
         if firstIndex != -1 and secondIndex != -1:
             break
     
-    print('\nThe decoder key is', firstIndex, '*', secondIndex, ':', firstIndex * secondIndex)
+    print('\nThe decoder key is', firstIndex + 1, '*', secondIndex + 1, ':', (firstIndex + 1) * (secondIndex + 1))
